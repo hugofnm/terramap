@@ -5,9 +5,10 @@ import java.util.Map;
 import java.util.UUID;
 
 import fr.thesmyler.smylibgui.widgets.buttons.ToggleButtonWidget;
-import fr.thesmyler.terramap.TerramapRemote;
+import fr.thesmyler.terramap.TerramapClientContext;
+import fr.thesmyler.terramap.gui.widgets.map.MapWidget;
 import fr.thesmyler.terramap.gui.widgets.markers.markers.Marker;
-import fr.thesmyler.terramap.gui.widgets.markers.markers.MobMarker;
+import fr.thesmyler.terramap.gui.widgets.markers.markers.entities.MobMarker;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.monster.IMob;
@@ -20,20 +21,19 @@ public class MobMarkerController extends MarkerController<MobMarker> {
 			102, 108, 102, 122,
 			102, 108, 102, 122,
 			102, 136, 102, 150,
-			this.areMakersVisible(), null, null);
+			this.getVisibility(), null);
 
 	public MobMarkerController() {
 		super(ID, 700, MobMarker.class);
-		this.button.setOnActivate(() -> this.setVisibility(true));
-		this.button.setOnDeactivate(() -> this.setVisibility(false));
+		this.button.setOnChange(b -> this.setVisibility(b));
 		this.button.setTooltip(I18n.format("terramap.terramapscreen.markercontrollers.buttons.mobs"));
 	}
 
 	@Override
-	public MobMarker[] getNewMarkers(Marker[] existingMarkers) {
-		if(TerramapRemote.getRemote().getProjection() == null) return new MobMarker[0];
+	public MobMarker[] getNewMarkers(Marker[] existingMarkers, MapWidget map) {
+		if(TerramapClientContext.getContext().getProjection() == null) return new MobMarker[0];
 		Map<UUID, Entity> entities = new HashMap<UUID, Entity>();
-		for(Entity entity: TerramapRemote.getRemote().getEntities()) {
+		for(Entity entity: TerramapClientContext.getContext().getEntities()) {
 			if(entity instanceof IMob) {
 				entities.put(entity.getPersistentID(), entity);
 			}
@@ -51,18 +51,23 @@ public class MobMarkerController extends MarkerController<MobMarker> {
 	}
 
 	@Override
-	public boolean showToggleButton() {
-		return TerramapRemote.getRemote().allowsMobRadar();
+	public boolean showButton() {
+		return TerramapClientContext.getContext().allowsMobRadar();
 	}
 
 	@Override
-	public ToggleButtonWidget getToggleButton() {
+	public ToggleButtonWidget getButton() {
 		return this.button;
 	}
 
 	@Override
-	public boolean areMakersVisible() {
-		return super.areMakersVisible() && TerramapRemote.getRemote().allowsMobRadar();
+	public boolean getVisibility() {
+		return super.getVisibility() && TerramapClientContext.getContext().allowsMobRadar();
+	}
+	
+	@Override
+	public String getSaveName() {
+		return ID;
 	}
 
 }

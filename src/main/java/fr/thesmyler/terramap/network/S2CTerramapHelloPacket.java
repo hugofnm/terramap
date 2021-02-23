@@ -3,8 +3,8 @@ package fr.thesmyler.terramap.network;
 import java.util.UUID;
 
 import fr.thesmyler.terramap.network.playersync.PlayerSyncStatus;
-import io.github.terra121.EarthGeneratorSettings;
 import io.netty.buffer.ByteBuf;
+import net.buildtheearth.terraplusplus.generator.EarthGeneratorSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
@@ -55,7 +55,7 @@ public class S2CTerramapHelloPacket implements IMessage {
 		this.serverVersion = TerramapNetworkManager.decodeStringFromByteBuf(buf);
 		String jsonWorldSettings = TerramapNetworkManager.decodeStringFromByteBuf(buf);
 		if(jsonWorldSettings.length() > 0) {
-			this.worldSettings = new EarthGeneratorSettings(jsonWorldSettings);
+			this.worldSettings = EarthGeneratorSettings.parse(jsonWorldSettings);
 		} else {
 			this.worldSettings = null;
 		}

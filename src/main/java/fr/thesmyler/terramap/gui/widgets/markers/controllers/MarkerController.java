@@ -1,9 +1,10 @@
 package fr.thesmyler.terramap.gui.widgets.markers.controllers;
 
 import fr.thesmyler.smylibgui.widgets.buttons.ToggleButtonWidget;
+import fr.thesmyler.terramap.gui.widgets.map.MapWidget;
 import fr.thesmyler.terramap.gui.widgets.markers.markers.Marker;
 
-public abstract class MarkerController<T extends Marker> {
+public abstract class MarkerController<T extends Marker> implements FeatureVisibilityController {
 	
 	private boolean visibility = true;
 	private final int zLayer;
@@ -16,19 +17,21 @@ public abstract class MarkerController<T extends Marker> {
 		this.clazz = clazz;
 	}
 	
-	public abstract T[] getNewMarkers(Marker[] existingMarkers);
+	public abstract T[] getNewMarkers(Marker[] existingMarkers, MapWidget map);
 	
 	public int getZLayer() {
 		return this.zLayer;
 	}
 	
-	public boolean areMakersVisible() {
+	@Override
+	public boolean getVisibility() {
 		return this.visibility;
 	}
 	
+	@Override
 	public void setVisibility(boolean yesNo) {
 		this.visibility = yesNo;
-		ToggleButtonWidget b = this.getToggleButton();
+		ToggleButtonWidget b = this.getButton();
 		if(b != null) b.setState(this.visibility);
 	}
 	
@@ -44,8 +47,10 @@ public abstract class MarkerController<T extends Marker> {
 		return this.clazz;
 	}
 	
-	public abstract boolean showToggleButton();
+	@Override
+	public abstract boolean showButton();
 	
-	public abstract ToggleButtonWidget getToggleButton();
+	@Override
+	public abstract ToggleButtonWidget getButton();
 
 }

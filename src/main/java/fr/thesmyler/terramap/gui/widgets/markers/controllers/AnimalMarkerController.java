@@ -5,9 +5,10 @@ import java.util.Map;
 import java.util.UUID;
 
 import fr.thesmyler.smylibgui.widgets.buttons.ToggleButtonWidget;
-import fr.thesmyler.terramap.TerramapRemote;
-import fr.thesmyler.terramap.gui.widgets.markers.markers.AnimalMarker;
+import fr.thesmyler.terramap.TerramapClientContext;
+import fr.thesmyler.terramap.gui.widgets.map.MapWidget;
 import fr.thesmyler.terramap.gui.widgets.markers.markers.Marker;
+import fr.thesmyler.terramap.gui.widgets.markers.markers.entities.AnimalMarker;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.monster.IMob;
@@ -21,20 +22,19 @@ public class AnimalMarkerController extends MarkerController<AnimalMarker> {
 			116, 108, 116, 122,
 			116, 108, 116, 122,
 			116, 136, 116, 150,
-			this.areMakersVisible(), null, null);
+			this.getVisibility(), null);
 
 	public AnimalMarkerController() {
 		super(ID, 700, AnimalMarker.class);
-		this.button.setOnActivate(() -> this.setVisibility(true));
-		this.button.setOnDeactivate(() -> this.setVisibility(false));
+		this.button.setOnChange(b -> this.setVisibility(b));
 		this.button.setTooltip(I18n.format("terramap.terramapscreen.markercontrollers.buttons.animals"));
 	}
 
 	@Override
-	public AnimalMarker[] getNewMarkers(Marker[] existingMarkers) {
-		if(TerramapRemote.getRemote().getProjection() == null) return new AnimalMarker[0];
+	public AnimalMarker[] getNewMarkers(Marker[] existingMarkers, MapWidget map) {
+		if(TerramapClientContext.getContext().getProjection() == null) return new AnimalMarker[0];
 		Map<UUID, Entity> entities = new HashMap<UUID, Entity>();
-		for(Entity entity: TerramapRemote.getRemote().getEntities()) {
+		for(Entity entity: TerramapClientContext.getContext().getEntities()) {
 			if(entity instanceof IAnimals && !(entity instanceof IMob)) {
 				entities.put(entity.getPersistentID(), entity);
 			}
@@ -52,18 +52,23 @@ public class AnimalMarkerController extends MarkerController<AnimalMarker> {
 	}
 
 	@Override
-	public boolean showToggleButton() {
-		return TerramapRemote.getRemote().allowsAnimalRadar();
+	public boolean showButton() {
+		return TerramapClientContext.getContext().allowsAnimalRadar();
 	}
 
 	@Override
-	public ToggleButtonWidget getToggleButton() {
+	public ToggleButtonWidget getButton() {
 		return this.button;
 	}
 	
 	@Override
-	public boolean areMakersVisible() {
-		return super.areMakersVisible() && TerramapRemote.getRemote().allowsAnimalRadar();
+	public boolean getVisibility() {
+		return super.getVisibility() && TerramapClientContext.getContext().allowsAnimalRadar();
 	}
 
+	@Override
+	public String getSaveName() {
+		return ID;
+	}
+	
 }

@@ -5,10 +5,11 @@ import java.util.Map;
 
 import org.apache.logging.log4j.Logger;
 
-import fr.thesmyler.terramap.caching.CacheManager;
-import fr.thesmyler.terramap.command.PermissionManager;
+import fr.thesmyler.terramap.TerramapVersion.InvalidVersionString;
+import fr.thesmyler.terramap.TerramapVersion.ReleaseType;
 import fr.thesmyler.terramap.eventhandlers.CommonTerramapEventHandler;
-import fr.thesmyler.terramap.maps.MapStyleRegistry;
+import fr.thesmyler.terramap.maps.MapStylesLibrary;
+import fr.thesmyler.terramap.permissions.PermissionManager;
 import fr.thesmyler.terramap.proxy.TerramapProxy;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
@@ -20,16 +21,17 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.network.NetworkCheckHandler;
 import net.minecraftforge.fml.relauncher.Side;
 
-@Mod(modid = TerramapMod.MODID, useMetadata=true)
+@Mod(modid=TerramapMod.MODID, useMetadata=true, dependencies="required-after:terraplusplus@[0.1.519,)")
 public class TerramapMod {
 	
     public static final String MODID = "terramap";
-    private static  String version;
 	public static final String AUTHOR_EMAIL = "smyler at mail dot com";
 	public static final String STYLE_UPDATE_HOSTNAME = "styles.terramap.thesmyler.fr";
+	private static TerramapVersion version; // Read from the metadata
+	public static final TerramapVersion OLDEST_COMPATIBLE_CLIENT = new TerramapVersion(1, 0, 0, ReleaseType.BETA, 6, 0);
+	public static final TerramapVersion OLDEST_COMPATIBLE_SERVER = new TerramapVersion(1, 0, 0, ReleaseType.BETA, 6, 0);
 
     public static Logger logger;
-    public static CacheManager cacheManager;
     
     /* Proxy things */
     private static final String CLIENT_PROXY_CLASS = "fr.thesmyler.terramap.proxy.TerramapClientProxy";
@@ -38,12 +40,13 @@ public class TerramapMod {
 	public static TerramapProxy proxy;
     
     @EventHandler
-    public void preInit(FMLPreInitializationEvent event) {
+    public void preInit(FMLPreInitializationEvent event) throws InvalidVersionString {
     	logger = event.getModLog();
-    	TerramapMod.version = event.getModMetadata().version;
+    	TerramapMod.version = new TerramapVersion(event.getModMetadata().version);
+    	TerramapMod.logger.info("Terramap version: " + getVersion());
     	TerramapMod.proxy.preInit(event);
     	File mapStyleFile = new File(event.getModConfigurationDirectory().getAbsolutePath() + "/terramap_user_styles.json");
-    	MapStyleRegistry.setConfigMapFile(mapStyleFile);
+    	MapStylesLibrary.setConfigMapFile(mapStyleFile);
     }
 
     @EventHandler
@@ -51,10 +54,10 @@ public class TerramapMod {
     	MinecraftForge.EVENT_BUS.register(new CommonTerramapEventHandler());
     	TerramapMod.proxy.init(event);
     	PermissionManager.registerNodes();
-    	MapStyleRegistry.loadFromConfigFile();
+    	MapStylesLibrary.loadFromConfigFile();
     }
     
-    public static String getVersion() {
+    public static TerramapVersion getVersion() {
     	return TerramapMod.version;
     }
     
@@ -65,7 +68,7 @@ public class TerramapMod {
     
     @NetworkCheckHandler
     public boolean isRemoteCompatible(Map<String, String> remote, Side side) {
-    	return true; //Anything should be ok, the actual check is down in the server event handler
+    	return true; //Anything should be ok, the actual check is done in the server event handler
     }
     
     @EventHandler

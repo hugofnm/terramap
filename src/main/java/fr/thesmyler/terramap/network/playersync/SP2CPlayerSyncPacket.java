@@ -2,9 +2,10 @@ package fr.thesmyler.terramap.network.playersync;
 
 import java.util.UUID;
 
-import fr.thesmyler.terramap.TerramapRemote;
+import fr.thesmyler.terramap.TerramapClientContext;
 import fr.thesmyler.terramap.network.TerramapNetworkManager;
 import io.netty.buffer.ByteBuf;
+import net.buildtheearth.terraplusplus.projection.OutOfProjectionBoundsException;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.GameType;
@@ -42,7 +43,12 @@ public class SP2CPlayerSyncPacket implements IMessage {
 	public void toBytes(ByteBuf buf) {
 		buf.writeInt(this.localPlayers.length);
 		for(TerramapPlayer player: this.localPlayers) {
-			double[] coordinates = player.getGeoCoordinates();
+			double[] coordinates;
+			try {
+				coordinates = player.getGeoCoordinates();
+			} catch(OutOfProjectionBoundsException e) {
+				coordinates = new double[] {Double.NaN, Double.NaN};
+			}
 			buf.writeLong(player.getUUID().getLeastSignificantBits());
 			buf.writeLong(player.getUUID().getMostSignificantBits());
 			String playerDisplayName = ITextComponent.Serializer.componentToJson(player.getDisplayName());
@@ -61,7 +67,7 @@ public class SP2CPlayerSyncPacket implements IMessage {
 
 		@Override
 		public IMessage onMessage(SP2CPlayerSyncPacket message, MessageContext ctx) {
-			Minecraft.getMinecraft().addScheduledTask(()->{TerramapRemote.getRemote().syncPlayers(message.remotePlayers);});
+			Minecraft.getMinecraft().addScheduledTask(()->{TerramapClientContext.getContext().syncPlayers(message.remotePlayers);});
 			return null;
 		}
 

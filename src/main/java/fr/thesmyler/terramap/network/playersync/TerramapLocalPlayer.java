@@ -3,9 +3,10 @@ package fr.thesmyler.terramap.network.playersync;
 import java.util.UUID;
 
 import fr.thesmyler.terramap.TerramapMod;
-import fr.thesmyler.terramap.TerramapRemote;
+import fr.thesmyler.terramap.TerramapClientContext;
 import fr.thesmyler.terramap.TerramapUtils;
-import io.github.terra121.projection.GeographicProjection;
+import net.buildtheearth.terraplusplus.projection.GeographicProjection;
+import net.buildtheearth.terraplusplus.projection.OutOfProjectionBoundsException;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
@@ -33,12 +34,12 @@ public class TerramapLocalPlayer extends TerramapPlayer {
 	}
 
 	@Override
-	public double[] getGeoCoordinates() {
+	public double[] getGeoCoordinates() throws OutOfProjectionBoundsException {
 		GeographicProjection proj;
 		if(this.player.world.isRemote) {
-			proj = TerramapRemote.getRemote().getProjection();
+			proj = TerramapClientContext.getContext().getProjection();
 		} else {
-			proj = TerramapUtils.getEarthGeneratorSettingsFromWorld(this.player.world).getProjection();
+			proj = TerramapUtils.getEarthGeneratorSettingsFromWorld(this.player.world).projection();
 		}
 		if(proj == null) return new double[] {Double.NaN, Double.NaN};
 		return proj.toGeo(this.player.posX, this.player.posZ);
@@ -61,10 +62,18 @@ public class TerramapLocalPlayer extends TerramapPlayer {
 
 	@Override
 	public float getAzimut() {
-		GeographicProjection proj = TerramapUtils.getEarthGeneratorSettingsFromWorld(this.player.world).getProjection();
+		GeographicProjection proj;
+		if(this.player.world.isRemote) {
+			proj = TerramapClientContext.getContext().getProjection();
+		} else {
+			proj = TerramapUtils.getEarthGeneratorSettingsFromWorld(this.player.world).projection();
+		}
 		if(proj == null) return Float.NaN;
-		//TODO Implement TerramapLocalPlayer::getAzimut
-		return 0;
+		try{
+			return proj.azimuth(this.player.posX, this.player.posZ, this.player.rotationYaw);
+		} catch(OutOfProjectionBoundsException e) {
+			return Float.NaN;
+		}
 	}
 
 }

@@ -1,7 +1,9 @@
 package fr.thesmyler.terramap.network;
 
+import java.util.UUID;
+
 import fr.thesmyler.terramap.TerramapMod;
-import fr.thesmyler.terramap.TerramapRemote;
+import fr.thesmyler.terramap.TerramapClientContext;
 import fr.thesmyler.terramap.network.playersync.PlayerSyncStatus;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
@@ -14,9 +16,10 @@ public class P2CSledgehammerHelloPacket implements IMessage {
 	public String sledgehammerVersion;
 	public PlayerSyncStatus syncPlayers = PlayerSyncStatus.DISABLED;
 	public PlayerSyncStatus syncSpectators = PlayerSyncStatus.DISABLED;
-	public boolean globalMap = true; // Can we open the map on non-terra worlds? //TODO Implement
+	public boolean globalMap = true; // Can we open the map on non-terra worlds?
 	public boolean globalSettings = false; // Should settings and preferences be saved for the whole network (true) or per server (false)
 	public boolean hasWarpSupport = false;
+	public UUID proxyUUID = new UUID(0, 0);
 	
 	//TODO Warp support
 
@@ -28,6 +31,9 @@ public class P2CSledgehammerHelloPacket implements IMessage {
 		this.globalMap = buf.readBoolean();
 		this.globalSettings = buf.readBoolean();
 		this.hasWarpSupport = buf.readBoolean();
+		long leastUUID = buf.readLong();
+		long mostUUID = buf.readLong();
+		this.proxyUUID = new UUID(mostUUID, leastUUID);
 	}
 
 	@Override
@@ -38,6 +44,7 @@ public class P2CSledgehammerHelloPacket implements IMessage {
 		buf.writeByte(this.syncSpectators.VALUE);
 		buf.writeBoolean(this.globalMap);
 		buf.writeBoolean(this.globalSettings);
+		buf.writeBoolean(this.hasWarpSupport);
 	}
 	
 	public static class P2CSledgehammerHelloPacketHandler implements IMessageHandler<P2CSledgehammerHelloPacket, IMessage> {
@@ -49,7 +56,13 @@ public class P2CSledgehammerHelloPacket implements IMessage {
 		public IMessage onMessage(P2CSledgehammerHelloPacket pkt, MessageContext ctx) {
 			Minecraft.getMinecraft().addScheduledTask(() -> {
 				TerramapMod.logger.info("Got Sledgehammer hello, remote version is " + pkt.sledgehammerVersion);
-				TerramapRemote.getRemote().setSledgehammerVersion(pkt.sledgehammerVersion);
+				TerramapClientContext.getContext().setSledgehammerVersion(pkt.sledgehammerVersion);
+				TerramapClientContext.getContext().setPlayersSynchronizedByProxy(pkt.syncPlayers);
+				TerramapClientContext.getContext().setSpectatorsSynchronizedByProxy(pkt.syncSpectators);
+				TerramapClientContext.getContext().setProxyForceMinimap(pkt.globalMap);
+				TerramapClientContext.getContext().setProxyForceGlobalSettings(pkt.globalSettings);
+				TerramapClientContext.getContext().setProxyWarpSupport(pkt.hasWarpSupport);
+				TerramapClientContext.getContext().setProxyUUID(pkt.proxyUUID);
 			});
 			return null;
 		}

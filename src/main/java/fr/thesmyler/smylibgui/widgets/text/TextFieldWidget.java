@@ -131,24 +131,24 @@ public class TextFieldWidget implements IWidget {
 		int startDrawAfterCursorX = textRenderX;
 		displaySelectionEnd = Math.min(displaySelectionEnd, string.length());
 
-		if (!string.isEmpty()) {
+		if(!string.isEmpty()) {
 			String textBeforeCursor = displayCursor ? string.substring(0, displaySelectionStart) : string;
 			startDrawAfterCursorX = this.font.drawStringWithShadow(textBeforeCursor, textRenderX, textRenderY, textColor);
 		}
 
 		boolean isCursorAtEndOfText = this.selectionStart < this.text.length() || this.text.length() >= this.getMaxTextLength();
 		int cursorX = startDrawAfterCursorX;
-		if (!displayCursor) {
+		if(!displayCursor) {
 			cursorX = displaySelectionStart > 0 ? textRenderX + this.getEffectiveWidth() : textRenderX;
-		} else if (isCursorAtEndOfText) {
+		} else if(isCursorAtEndOfText) {
 			cursorX = --startDrawAfterCursorX;
 		}
 
-		if (!string.isEmpty() && displayCursor && displaySelectionStart < string.length()) {
+		if(!string.isEmpty() && displayCursor && displaySelectionStart < string.length()) {
 			this.font.drawStringWithShadow(string.substring(displaySelectionStart), startDrawAfterCursorX, textRenderY, textColor);
 		}
 
-		if(focused) {
+		if(focused && this.isEnabled()) {
 			if (isCursorAtEndOfText) {
 				GuiScreen.drawRect(cursorX, textRenderY - 1, cursorX+1, textRenderY+1 + 9, cursorColor);
 			} else {
@@ -194,6 +194,7 @@ public class TextFieldWidget implements IWidget {
 
 	@Override
 	public boolean onClick(int mouseX, int mouseY, int mouseButton, Screen parent) {
+		if(!this.isEnabled()) return false;
 		if (mouseButton == 0) {
 			int mPos = mouseX;
 			if (this.hasBackground) mPos -= 4;
@@ -207,6 +208,7 @@ public class TextFieldWidget implements IWidget {
 
 	@Override
 	public boolean onDoubleClick(int mouseX, int mouseY, int mouseButton, @Nullable Screen parent) {
+		if(!this.isEnabled()) return false;
 		if(mouseButton == 0) {
 			this.setSelectionStart(this.getWordSkipPosition(-1, this.getCursor(), false));
 			this.setSelectionEnd(this.getWordSkipPosition(1, this.getCursor(), false));
@@ -216,6 +218,7 @@ public class TextFieldWidget implements IWidget {
 
 	@Override
 	public void onKeyTyped(char typedChar, int keyCode, @Nullable Screen parent) {
+		if(!this.isEnabled()) return;
 		this.selecting = GuiScreen.isShiftKeyDown();
 		if (Screen.isKeyComboCtrlA(keyCode)) {
 			this.selectAll();
@@ -273,6 +276,7 @@ public class TextFieldWidget implements IWidget {
 
 	@Override
 	public void onMouseDragged(int mouseX, int mouseY, int dX, int dY, int mouseButton, @Nullable Screen parent) {
+		if(!this.isEnabled()) return;
 		if (mouseButton == 0) {
 			int mPos = mouseX;
 			if (this.hasBackground) mPos -= 4;
@@ -587,7 +591,6 @@ public class TextFieldWidget implements IWidget {
 		return hasBackground;
 	}
 
-	@Override
 	public boolean isEnabled() {
 		return this.enabled;
 	}
@@ -641,7 +644,7 @@ public class TextFieldWidget implements IWidget {
 	}
 	
 	public static boolean isValidChar(char chr) {
-		return chr != '§' && chr >= ' ' && chr != 127;
+		return chr != '\u00a7' && chr >= ' ' && chr != 127;
 	}
 
 	public static String stripInvalidChars(String str) {

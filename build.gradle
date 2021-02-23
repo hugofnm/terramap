@@ -30,11 +30,38 @@ minecraft {
     mappings = project.mcp_mappings
     runDir = "run"
 }
+
+repositories {
+	maven {
+   		name = "JitPack"
+        url = "https://jitpack.io/"
+    }
+    maven { //used for leveldb
+        name = "DaPorkchop_"
+        url = "https://maven.daporkchop.net/"
+    }
+    maven { //used for leveldb
+        name = "OpenCollab Snapshots"
+        url = "https://repo.opencollab.dev/snapshot/"
+    }
+}
+
 dependencies {
     
-	// We need Terra121, OpenCubicChunks and CubicWorlsGen in ./libs
-	// Malisis core seems to be causing problems, but is fortunately not mandatory
-
+	deobfProvided ("com.github.OpenCubicChunks.CubicChunks:cubicchunks:6e18a97abe31e1c7892ebcf8ed0f17a4ac379e10") {
+        transitive = false
+    }
+    deobfProvided ("com.github.OpenCubicChunks:CubicWorldGen:27de56d2f792513873584b2f8fd9f3082fb259ec") {
+        transitive = false
+    }
+    deobfProvided ("com.github.BuildTheEarth:terraplusplus:master-SNAPSHOT") {
+        transitive = true
+    }
+    runtime "org.apache.commons:commons-imaging:1.0-alpha2"
+    runtime("net.daporkchop:leveldb-mcpe-jni:0.0.10-SNAPSHOT")  {
+        exclude group: "io.netty"
+    }
+    
 }
 
 processResources {
